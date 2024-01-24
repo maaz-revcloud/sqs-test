@@ -1,5 +1,4 @@
 const AWS = require("aws-sdk");
-const { Pool } = require("pg");
 
 AWS.config.update({
   region: "us-west-2",
