@@ -10,9 +10,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-sqs": "^3.501.0",
     "aws-sdk": "^2.1545.0",
     "body-parser": "^1.20.2",
     "express": "^4.18.2",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "sqs-consumer": "^8.1.5"
   }
 }

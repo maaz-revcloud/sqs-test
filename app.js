@@ -2,6 +2,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const AWS = require("aws-sdk");
 const { Pool } = require("pg");
+const { Consumer } = require('sqs-consumer');
+const { SQSClient } = require('@aws-sdk/client-sqs');
 
 AWS.config.update({
   region: "us-west-2",
@@ -77,6 +79,30 @@ const getDatabasePool = async (event) => {
 };
 
 getDatabasePool();
+
+const queue = Consumer.create({
+  queueUrl: 'https://sqs.us-west-2.amazonaws.com/221490242148/Appflow-Status-Update',
+  handleMessage: async ({ Body }) => {
+    const jsonString = Body.replace(/^"?'?|"?'?$/g, '');
+    const jsonObject = JSON.parse(jsonString);
+    console.log(jsonObject)
+
+    await processQueueMessage(jsonObject)
+  },
+  sqs: new SQSClient({
+    region: 'us-west-2'
+  })
+});
+
+queue.on('error', (err) => {
+  console.error(err.message);
+});
+
+queue.on('processing_error', (err) => {
+  console.error(err.message);
+});
+
+queue.start();
 
 const updateFlowStatus = async (
   flow_id,
@@ -211,13 +237,9 @@ const findTimestampFieldIdentifierForStatusUpdate = async (
   return null; // Return null if no match is found
 };
 
-app.get("/", async (req, res) => {
-  return res.send("Server is up and running!!!");
-});
-
-app.post("/flow-status-update", async (req, res) => {
+const processQueueMessage = async (message) => {
   try {
-    const flowExecutionRecord = req.body;
+    const flowExecutionRecord = message;
 
     if (
       flowExecutionRecord.detail &&
@@ -306,15 +328,19 @@ app.post("/flow-status-update", async (req, res) => {
           }
         }
       }
-      return res.json({
-        message: "Flow Updated",
-      });
+      console.log("Flow Updated")
+      return
     }
   } catch (error) {
     console.log(error);
-    return res.json(error);
+    return
   }
+}
+
+app.get("/", async (req, res) => {
+  return res.send("Server is up and running!!!");
 });
+
 
 app.listen(1313, () => {
   console.log("Server is running on port 1313");
