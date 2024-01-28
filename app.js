@@ -103,7 +103,6 @@ queue.on('processing_error', (err) => {
 });
 
 queue.start();
-queue.stop({ abort: true })
 
 const updateFlowStatus = async (
   flow_id,
